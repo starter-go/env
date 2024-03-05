@@ -1,0 +1,4 @@
+github.com/starter-go/afs v0.9.6 h1:HxMWrxI5aWN3AVjfWUQr6JRvebPbsCkmWte0ZMRi3P4=
+github.com/starter-go/afs v0.9.6/go.mod h1:Kuwz+TntvRVUYJuHWfR9hkEIcBiIC3ScW9IS/gjJulM=
+github.com/starter-go/vlog v0.9.8 h1:NmVv/lquEmvQ78nRf0C5eiJ0prNByV8o4aMmwBB3isc=
+github.com/starter-go/vlog v0.9.8/go.mod h1:ywWUCfWNTqXrelvO4/3sQ04SCW4ClR3PiN3qpSlXhH0=
