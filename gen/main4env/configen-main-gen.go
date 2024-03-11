@@ -31,13 +31,15 @@ func (inst*autoRegistrar) addAll() error {
 
     
     inst.register(&p07222c0995_code_EnvServiceImpl{})
-    inst.register(&p1dc79f38c2_locators_CacheLocator{})
-    inst.register(&p1dc79f38c2_locators_ComputeBasedLocator{})
-    inst.register(&p1dc79f38c2_locators_DefaultLocator{})
-    inst.register(&p1dc79f38c2_locators_EnvBasedLocator{})
-    inst.register(&p1dc79f38c2_locators_ExampleLocator{})
-    inst.register(&p1dc79f38c2_locators_PrepareLocator{})
-    inst.register(&p1dc79f38c2_locators_PropertyBasedLocator{})
+    inst.register(&p3a6fd730c7_resolvers_CacheResolver{})
+    inst.register(&p3a6fd730c7_resolvers_ComputeBasedResolver{})
+    inst.register(&p3a6fd730c7_resolvers_DefaultResolver{})
+    inst.register(&p3a6fd730c7_resolvers_EnvBasedResolver{})
+    inst.register(&p3a6fd730c7_resolvers_ExampleResolver{})
+    inst.register(&p3a6fd730c7_resolvers_MutexResolver{})
+    inst.register(&p3a6fd730c7_resolvers_NamesResolver{})
+    inst.register(&p3a6fd730c7_resolvers_PrepareResolver{})
+    inst.register(&p3a6fd730c7_resolvers_PropertyBasedResolver{})
 
 
     return nil

@@ -1,6 +1,8 @@
 package code
 
 import (
+	"fmt"
+
 	"github.com/starter-go/afs"
 	"github.com/starter-go/application/environment"
 	"github.com/starter-go/application/properties"
@@ -14,9 +16,9 @@ type EnvServiceImpl struct {
 
 	_as func(env.Service) //starter:as("#")
 
-	Locators []env.LocatorRegistry //starter:inject(".")
+	Resolvers []env.ResolverRegistry //starter:inject(".")
 
-	chain env.LocatorChain
+	chain env.ResolverChain
 }
 
 func (inst *EnvServiceImpl) _impl() env.Service {
@@ -27,22 +29,22 @@ func (inst *EnvServiceImpl) _impl() env.Service {
 func (inst *EnvServiceImpl) ForApp(appName string) env.Context {
 	ctx := new(envAppCtx)
 	ctx.appName = appName
-	ctx.chain = inst.getLocatorChain()
+	ctx.chain = inst.getResolverChain()
 	return ctx
 }
 
-func (inst *EnvServiceImpl) getLocatorChain() env.LocatorChain {
+func (inst *EnvServiceImpl) getResolverChain() env.ResolverChain {
 	chain := inst.chain
 	if chain == nil {
-		chain = inst.loadLocatorChain()
+		chain = inst.loadResolverChain()
 		inst.chain = chain
 	}
 	return chain
 }
 
-func (inst *EnvServiceImpl) loadLocatorChain() env.LocatorChain {
-	src := inst.Locators
-	builder := new(locatorChainBuilder)
+func (inst *EnvServiceImpl) loadResolverChain() env.ResolverChain {
+	src := inst.Resolvers
+	builder := new(resolverChainBuilder)
 	for _, r1 := range src {
 		r2s := r1.Registrations()
 		builder.add(r2s...)
@@ -53,7 +55,7 @@ func (inst *EnvServiceImpl) loadLocatorChain() env.LocatorChain {
 ////////////////////////////////////////////////////////////////////////////////
 
 type envAppCtx struct {
-	chain   env.LocatorChain
+	chain   env.ResolverChain
 	appName string
 }
 
@@ -67,18 +69,36 @@ func (inst *envAppCtx) AppName() string {
 
 // Query ...
 func (inst *envAppCtx) Query(want *env.Want) (*env.Have, error) {
-	want.App = inst.appName
-	have := &env.Have{Want: want}
-	q := &env.Query{Want: want, Have: have}
-	chain := inst.chain
-	err := chain.Locate(q)
+	q := &env.Query{}
+	q.Want = want
+	err := inst.doQuery(q)
 	if err != nil {
 		return nil, err
 	}
-	if have.Path == nil {
+	return q.Have, nil
+}
+
+func (inst *envAppCtx) doQuery(q *env.Query) error {
+	if q == nil {
+		return fmt.Errorf("no param:query")
+	}
+	if q.Want == nil {
+		q.Want = &env.Want{}
+	}
+	if q.Have == nil {
+		q.Have = &env.Have{}
+	}
+	q.Want.App = inst.appName
+	q.Have.Want = q.Want
+	chain := inst.chain
+	err := chain.Resolve(q)
+	if err != nil {
+		return err
+	}
+	if q.Have.Path == nil {
 		panic("env.Have.Path is nil")
 	}
-	return have, nil
+	return nil
 }
 
 // GetPath ...
@@ -93,13 +113,17 @@ func (inst *envAppCtx) GetPath(q *env.Want) afs.Path {
 // GetEnvironment ...
 func (inst *envAppCtx) GetEnvironment() environment.Table {
 	dst := environment.NewTable(nil)
-	src := env.ListEnvNames(inst.appName)
-	for _, name := range src {
-		want := &env.Want{Env: name}
-		path := inst.GetPath(want)
-		if path != nil {
-			value := path.GetPath()
-			dst.SetEnv(name, value)
+	q := &env.Query{}
+	q.Names = make(map[string]*env.Want)
+	err := inst.doQuery(q)
+	if err != nil {
+		return dst
+	}
+	src := q.Names
+	for _, item := range src {
+		have, err := inst.Query(item)
+		if err == nil && have != nil {
+			dst.SetEnv(item.Env, have.Value)
 		}
 	}
 	return dst
@@ -108,13 +132,17 @@ func (inst *envAppCtx) GetEnvironment() environment.Table {
 // GetProperties ...
 func (inst *envAppCtx) GetProperties() properties.Table {
 	dst := properties.NewTable(nil)
-	src := env.ListPropertyNames(inst.appName)
-	for _, name := range src {
-		want := &env.Want{Property: name}
-		path := inst.GetPath(want)
-		if path != nil {
-			value := path.GetPath()
-			dst.SetProperty(name, value)
+	q := &env.Query{}
+	q.Names = make(map[string]*env.Want)
+	err := inst.doQuery(q)
+	if err != nil {
+		return dst
+	}
+	src := q.Names
+	for _, item := range src {
+		have, err := inst.Query(item)
+		if err == nil && have != nil {
+			dst.SetProperty(item.Property, have.Value)
 		}
 	}
 	return dst

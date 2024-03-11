@@ -1,4 +1,4 @@
-package locators
+package resolvers
 
 import (
 	"fmt"
@@ -26,34 +26,34 @@ const (
 	envShareSystemHome = envRegularPrefix + "SHARE_SYSTEM_HOME"
 )
 
-// ComputeBasedLocator ...
-type ComputeBasedLocator struct {
+// ComputeBasedResolver ...
+type ComputeBasedResolver struct {
 
 	//starter:component
 
-	_as func(env.LocatorRegistry) //starter:as(".")
+	_as func(env.ResolverRegistry) //starter:as(".")
 
 	FS afs.FS //starter:inject("#")
 
 	handlers map[string]func(q *env.Query) error
 }
 
-func (inst *ComputeBasedLocator) _impl() (env.LocatorRegistry, env.Locator) {
+func (inst *ComputeBasedResolver) _impl() (env.ResolverRegistry, env.Resolver) {
 	return inst, inst
 }
 
 // Registrations ...
-func (inst *ComputeBasedLocator) Registrations() []*env.LocatorRegistration {
-	lr := &env.LocatorRegistration{
-		Locator:  inst,
+func (inst *ComputeBasedResolver) Registrations() []*env.ResolverRegistration {
+	lr := &env.ResolverRegistration{
+		Resolver: inst,
 		Enabled:  true,
 		Priority: PriorityComputeBased,
 	}
-	return []*env.LocatorRegistration{lr}
+	return []*env.ResolverRegistration{lr}
 }
 
-// Locate ...
-func (inst *ComputeBasedLocator) Locate(query *env.Query, chain env.LocatorChain) error {
+// Resolve ...
+func (inst *ComputeBasedResolver) Resolve(query *env.Query, chain env.ResolverChain) error {
 
 	err := inst.tryLocateAsEnv(query)
 	if err == nil {
@@ -66,10 +66,10 @@ func (inst *ComputeBasedLocator) Locate(query *env.Query, chain env.LocatorChain
 	}
 
 	// return err
-	return chain.Locate(query)
+	return chain.Resolve(query)
 }
 
-func (inst *ComputeBasedLocator) tryLocateAsEnv(query *env.Query) error {
+func (inst *ComputeBasedResolver) tryLocateAsEnv(query *env.Query) error {
 	want := query.Want
 	app := want.App
 	name := want.Env
@@ -81,7 +81,7 @@ func (inst *ComputeBasedLocator) tryLocateAsEnv(query *env.Query) error {
 	return fmt.Errorf("not a env")
 }
 
-func (inst *ComputeBasedLocator) tryLocateAsProperty(query *env.Query) error {
+func (inst *ComputeBasedResolver) tryLocateAsProperty(query *env.Query) error {
 	want := query.Want
 	app := want.App
 	name := want.Property
@@ -96,7 +96,7 @@ func (inst *ComputeBasedLocator) tryLocateAsProperty(query *env.Query) error {
 	return fmt.Errorf("not a property")
 }
 
-func (inst *ComputeBasedLocator) handleWithKey(query *env.Query, key string) error {
+func (inst *ComputeBasedResolver) handleWithKey(query *env.Query, key string) error {
 	table := inst.handlers
 	if table == nil {
 		table = make(map[string]func(q *env.Query) error)
@@ -110,7 +110,7 @@ func (inst *ComputeBasedLocator) handleWithKey(query *env.Query, key string) err
 	return h(query)
 }
 
-func (inst *ComputeBasedLocator) initKeyHandlers(table map[string]func(q *env.Query) error) {
+func (inst *ComputeBasedResolver) initKeyHandlers(table map[string]func(q *env.Query) error) {
 
 	lc := &locationComputer{fs: inst.FS}
 

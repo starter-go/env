@@ -40,10 +40,13 @@ const (
 
 // Want ... 表示查询条件
 type Want struct {
-	App      string // the simple-app-name
+
+	// 基本条件: (Env|Property) 二选一
 	Env      string // 环境变量名称
 	Property string // 属性名称
 
+	// 扩展条件：
+	App      string // the simple-app-name
 	Category Category
 	Scope    Scope
 	User     User
@@ -51,8 +54,14 @@ type Want struct {
 
 // Have ... 表示查询结果
 type Have struct {
+	// 条件:
 	Want *Want
-	Path afs.Path
+
+	// 结果:
+	Value string
+
+	// 扩展结果:
+	Path afs.Path // 可选项：如果 value 是本地路径
 }
 
 // ComputeEnvName 根据条件取环境变量名称
